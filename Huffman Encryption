@@ -1,0 +1,212 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <time.h>
+#include <string.h>
+
+#define NUM 128//最大字符类数与密钥的位数
+#define LEFT 1
+#define RIGHT 0
+
+struct Deal{
+	int weight;
+	char Huff[NUM];
+};
+
+typedef struct Tree{//哈夫曼树每个结点的结构
+	char Ch;
+	int EWeight;
+	struct Tree *Left;
+	struct Tree *Right;
+}*Node;
+
+struct{//最小堆
+	Node Data[NUM + 1];
+	int Size;
+}Stock;
+
+typedef struct Stack{//栈
+	char loc;
+	struct Stack *next;
+}*Code;
+
+void Create();//先将256个字符根据其权值建立最小堆
+Node SetHuff();//建立哈夫曼树
+void InStock(Node);//将一个结构为Node的子哈夫曼树插入最小堆中
+void CStock(int, char);//预建立最小堆的每一部的代码
+Node OutStock();//从最小堆中提出一个元素
+void BuildCode(Node);//建立哈夫曼码
+void InFirst();//把根放进你栈中
+void InStack(int);//放进栈中
+void OutStack();//弹出栈
+void Last(Node);//后序遍历
+void Building(char);//建立单个字母的哈夫曼码
+
+Deal ASCII[NUM];//每一个ASCII码对应的哈夫曼码与其权值
+Node first;//指向哈夫曼树的指针
+Code One;//栈的头指针
+
+void main(){
+	FILE *key, *txt, *sct;
+	int i;
+	int c;
+	char Key[NUM];
+	srand(time(NULL));
+	for (i = 0; i < NUM; i++)
+		Key[i] = rand() % 10;
+	key = fopen("F:\\C\\Key\\key.txt", "w");
+	for (i = 0; i < NUM; i++)
+		fprintf(key, "%d", Key[i]);//将密钥存进一个txt文件里
+	fclose(key);
+	for (i = 0; i < NUM; i++)
+		ASCII[i].weight = Key[i];
+	Stock.Size = 0;
+	first = SetHuff();
+	BuildCode(first);
+	txt = fopen("F:\\C\\Key\\Article.txt", "r");
+	sct = fopen("F:\\C\\Key\\Secret.txt", "w");
+	while (1){
+		c = fgetc(txt);
+		if (c == EOF)break;
+		fprintf(sct, "%s", ASCII[c].Huff);
+	}
+	fprintf(sct, "%c", EOF);
+	printf("Finished\n");
+	system("pause");
+	fclose(txt);
+	fclose(sct);
+}
+
+void BuildCode(Node T){
+	InFirst();
+	InStack(LEFT);
+	Last(T->Left);
+	InStack(RIGHT);
+	Last(T->Right);
+}
+
+void Last(Node T){
+	if (T->Ch == -1){
+		InStack(LEFT);
+		Last(T->Left);
+		InStack(RIGHT);
+		Last(T->Right);
+	}
+	Building(T->Ch);
+	if (One)
+		OutStack();
+}
+
+void Building(char c){
+	int n;
+	int i = 0;
+	char a;
+	Code T;
+	T = One;
+	for (; T->next; T = T->next)
+		ASCII[c].Huff[i++] = T->loc;
+	n = strlen(ASCII[c].Huff);
+	for (i = 0; i < n / 2; i++){
+		a = ASCII[c].Huff[i];
+		ASCII[c].Huff[i] = ASCII[c].Huff[n - i - 1];
+		ASCII[c].Huff[n - i - 1] = a;
+	}
+}
+
+void InStack(int judge){
+	Code T;
+	T = (Code)malloc(sizeof(struct Stack));
+	if (judge == LEFT)T->loc = '0';
+	else T->loc = '1';
+	T->next = One;
+	One = T;
+}
+
+void OutStack(){
+	Code T;
+	T = One;
+	One = One->next;
+	free(T);
+}
+
+void InFirst(){
+	Code T;
+	T = (Code)malloc(sizeof(struct Stack));
+	T->loc = '\0';
+	T->next = NULL;
+	One = T;
+}
+
+//以下函数为哈夫曼树的建立
+Node SetHuff(){
+	Node T;
+	Create();
+	while (Stock.Size > 1){
+		T = (Node)malloc(sizeof(struct Tree));
+		//printf("Ha?\n");
+		T->Left = OutStock();
+		T->Right = OutStock();
+		T->Ch = -1;
+		T->EWeight = T->Left->EWeight + T->Right->EWeight;
+		InStock(T);
+		//system("pause");
+	}
+	T = OutStock();
+	return T;
+}
+
+void InStock(Node T){
+	int i;
+	i = ++Stock.Size;
+	for (; Stock.Data[i / 2]->EWeight > T->EWeight; i /= 2)
+		Stock.Data[i] = Stock.Data[i / 2];
+	Stock.Data[i] = T;
+}
+
+Node OutStock(){
+	int Parent, Child;
+	Node T;
+	Node tree;
+	tree = Stock.Data[1];
+	T = Stock.Data[Stock.Size--];
+	if (!Stock.Size)return tree;
+	for (Parent = 1; Parent * 2 <= Stock.Size; Parent = Child){
+		Child = Parent * 2;
+		if (Child != Stock.Size&&Stock.Data[Child]->EWeight > Stock.Data[Child + 1]->EWeight)
+			Child++;
+		if (T->EWeight <= Stock.Data[Child]->EWeight)break;
+		else
+			Stock.Data[Parent] = Stock.Data[Child];
+	}
+	Stock.Data[Parent] = T;
+	return tree;
+}
+
+void Create(){
+	int i;
+	Node tree;
+	tree = (Node)malloc(sizeof(struct Tree));
+	tree->Left = NULL;
+	tree->Right = NULL;
+	tree->Ch = -1;
+	tree->EWeight = -1;
+	Stock.Data[0] = tree;
+	for (i = 0; i < NUM; i++)
+		CStock(ASCII[i].weight, (char)i);
+}
+
+void CStock(int w, char c){
+	int i;
+	Node tree;
+	tree = (Node)malloc(sizeof(struct Tree));
+	tree->Left = NULL;
+	tree->Right = NULL;
+	tree->Ch = c;
+	tree->EWeight = w;
+	Stock.Data[Stock.Size + 1] = tree;
+	i = ++Stock.Size;
+	for (; Stock.Data[i / 2]->EWeight > Stock.Data[i]->EWeight; i /= 2){
+		tree = Stock.Data[i / 2];
+		Stock.Data[i / 2] = Stock.Data[i];
+		Stock.Data[i] = tree;
+	}
+}
