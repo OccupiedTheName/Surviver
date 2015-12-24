@@ -1,0 +1,127 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+#define Position int
+#define BucketSize 676
+
+typedef struct Word *ElementType;
+struct Word{
+    char Name[31];
+    int Weight;
+    int Length;
+    ElementType Next;
+};
+typedef struct Cell *HashTable;
+struct Cell{
+    int TableSize;
+    ElementType *Buckets;
+};
+struct Aim{
+    char Name[10001];
+    int Weight;
+    int Length;
+};
+
+HashTable CreateTable(void);
+Position Hash(ElementType);
+ElementType Find(char[],HashTable);
+void Insert(ElementType,HashTable);
+void Free(HashTable);
+
+int main(){
+    int i,N;
+    Aim X;
+    ElementType word;
+    HashTable H;
+
+    H=CreateTable();
+    word=(ElementType)malloc(sizeof(struct Word));
+    word->Next=NULL;
+    while(scanf("%d %s",&N,&X.Name)!=EOF){
+        X.Length=strlen(X.Name);
+        for(i=0;i<N;i++){
+            scanf("%s %d",&word->Name,&word->Weight);
+            word->Length=strlen(word->Name);
+            Insert(word,H);
+        }
+        for(i=0;i<BucketSize;i++)
+            if(H->Buckets[i]->Next){
+                word=H->Buckets[i]->Next;
+                while(word){
+                    printf("%d %s\n",word->Name,word->Weight);
+                    word=word->Next;
+                }
+            }
+        Free(H);
+    }
+}
+
+HashTable CreateTable(void)
+{
+    int i;
+    HashTable H;
+
+    H=(HashTable)malloc(sizeof(struct Cell));
+    H->TableSize=BucketSize;
+    H->Buckets=(ElementType *)malloc(BucketSize*sizeof(ElementType));
+    for(i=0;i<BucketSize;i++)
+        H->Buckets[i]->Next=NULL;
+    return H;
+}
+
+Position Hash(char Key[])
+{
+    int n;
+    Position Pos;
+
+    n=strlen(Key);
+    if(n==1)
+        Pos=Key[0]-'a';
+    else
+        Pos=(Key[0]-'a')*26+Key[1]-'a';
+    return Pos;
+}
+
+ElementType Find(char Key[],HashTable H)
+{
+    Position Pos=Hash(Key);
+    ElementType Current;
+
+    Current=H->Buckets[Pos]->Next;
+    while(Current&&strcmp(Key,Current->Name))
+        Current=Current->Next;
+    return Current;
+}
+
+void Insert(ElementType Key,HashTable H)
+{
+    ElementType Element;
+    Position Pos=Hash(Key->Name);
+
+    Element=(ElementType)malloc(sizeof(struct Word));
+    strcpy(Element->Name,Key->Name);
+    Element->Weight=Key->Weight;
+    Element->Length=Key->Length;
+    Element->Next=H->Buckets[Pos]->Next;
+    H->Buckets[Pos]->Next=Element;
+}
+
+void Free(HashTable H)
+{
+    ElementType Current;
+    int i;
+
+    for(i=0;i<BucketSize;i++)
+        while(H->Buckets[i]->Next){
+            Current=H->Buckets[i]->Next;
+            if(!Current->Next){
+                free(Current);
+                H->Buckets[i]->Next=NULL;
+            }
+            else
+                while(Current->Next->Next)Current=Current->Next;
+            free(Current->Next);
+            Current->Next=NULL;
+        }
+}
