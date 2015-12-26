@@ -1,208 +1,99 @@
 #include <stdio.h>
-#include <stdlib.h>
 #include <string.h>
-#include <ctype.h>
 
-#define Position int
-#define BucketSize 676
+#define WORD_LENGTH 31
+#define MAX_LENGTH 10002
+#define WEIGHT_TYPE long long
+#define POSITION int
 
-enum{ FALSE, TRUE };
+typedef enum{ FALSE, TRUE }END;
 
-typedef long long WeightType;
-typedef struct Word *ElementType;
-struct Word{
-	char Name[31];
-	WeightType Weight;
-	ElementType Next;
-};
-typedef struct Cell *HashTable;
-struct Cell{
-	int TableSize;
-	ElementType *Buckets;
-};
-struct WeightJudge{
-	WeightType Weight;
-	bool judge;
+typedef struct Node *Trie;
+struct Node{
+	END End;
+	WEIGHT_TYPE Weight;
+	Trie Son[26];
 };
 
-HashTable CreateTable(void);
-Position Hash(ElementType);
-ElementType Find(char[], HashTable);
-void Insert(ElementType, HashTable);
-void Free(HashTable);
-WeightJudge CulMaxWeight(char[], HashTable, int);
+struct{
+	int Size;
+	struct Node Hahaha[MAX_LENGTH * WORD_LENGTH];
+}Buff;
 
-int main(){
-	int i, N, MaxLength, n;
-	char X[10001];
-	ElementType word;
-	HashTable H;
-	WeightJudge Weight;
+Trie BuildTrie(void);
+void Insert(char *, WEIGHT_TYPE, Trie);
+void CulMaxWei(int, WEIGHT_TYPE *, Trie, char *);
 
-	H = CreateTable();
-	word = (ElementType)malloc(sizeof(struct Word));
-	word->Next = NULL;
-	while (scanf("%d %s", &N, &X) != EOF){
-		MaxLength = 0;
-		for (i = 0; i<N; i++){
-			scanf("%s %ld", &word->Name, &word->Weight);
-			n = strlen(word->Name);
-			if (MaxLength < n)MaxLength = n;
-			Insert(word, H);
-		}
-		Weight = CulMaxWeight(X, H, MaxLength);
-		if (Weight.judge)
-			printf("%d\n", Weight.Weight);
-		else
-			printf("-1\n");
-		Free(H);
-	}
-}
-
-WeightJudge CulMaxWeight(char X[], HashTable H, int Maxlength)
+int main()
 {
-	int n = strlen(X);
-	if (!n){
-		WeightJudge Weight;
+	int N, XLength;
+	WEIGHT_TYPE MaxWeight[MAX_LENGTH];
+	char X[MAX_LENGTH];
+	Trie Root;
+	int i;
+	WEIGHT_TYPE Weight;
+	char Word[WORD_LENGTH];
 
-		Weight.judge = TRUE;
-		Weight.Weight = 0;
-		return Weight;
-	}
-	else if (n == 1){
-		WeightJudge Weight;
-		ElementType Aim;
-
-		Aim = Find(X, H);
-		if (!Aim){
-			Weight.judge = FALSE;
-			return Weight;
+	X[0] = '\0';
+	while (scanf("%d %s", &N, X + 1)!=EOF){
+		Buff.Size = 0;
+		MaxWeight[0] = 0;
+		XLength = strlen(X + 1);
+		Root = BuildTrie();
+		for (i = 0; i < N; i++){
+			scanf("%s %lld", Word, &Weight);
+			Insert(Word, Weight, Root);
 		}
-		else {
-			Weight.judge = TRUE;
-			Weight.Weight = Aim->Weight;
-			return Weight;
+		for (i = 1; i <= XLength; i++){
+			MaxWeight[i] = -1;
+			CulMaxWei(i, MaxWeight, Root, X);
 		}
-	}
-	else if (Maxlength > 1){
-		int i;
-		char Name[31], c;
-		ElementType Aim;
-		WeightJudge Weight, TotalWeight;
-
-		Weight.Weight = 0;
-		TotalWeight.judge = FALSE;
-		TotalWeight.Weight = -2100000000;
-		if (n > Maxlength)n = Maxlength;
-		strncpy(Name, X, n);
-		c = Name[0];
-		for (i = 1; i <= n; i++){
-			Name[i - 1] = c;
-			c = Name[i];
-			Name[i] = '\0';
-			Aim = Find(Name, H);
-			if (!Aim)continue;
-			else{
-				Weight = CulMaxWeight(X + i, H, Maxlength);
-				if (Weight.judge == TRUE)
-					if (TotalWeight.Weight < Weight.Weight + Aim->Weight){
-						TotalWeight.Weight = Weight.Weight + Aim->Weight;
-						TotalWeight.judge = TRUE;
-					}
-			}
-		}
-		return TotalWeight;
-	}
-	else{
-		char c[2];
-		ElementType Aim;
-		WeightJudge Weight, TotalWeight;
-
-		TotalWeight.judge = FALSE;
-		c[1] = '\0';
-		c[0] = X[0];
-		Aim = Find(c, H);
-		if (!Aim){
-			return TotalWeight;
-		}
-		else {
-			Weight = CulMaxWeight(X + 1, H, Maxlength);
-			if (Weight.judge){
-				TotalWeight.Weight = Aim->Weight + Weight.Weight;
-				TotalWeight.judge = TRUE;
-			}
-			return TotalWeight;
-		}
+		printf("%lld\n", MaxWeight[XLength]);
 	}
 }
 
-HashTable CreateTable(void)
+void CulMaxWei(int i, WEIGHT_TYPE *MaxWeight, Trie Root,char *X)
+{
+	int j;
+	Trie Current = Root;
+	POSITION Pos;
+
+	for (j = i; X[j]; j--){
+		Pos = X[j] - 'a';
+		if (Current->Son[Pos]){
+			if (Current->Son[Pos]->End)
+				if (MaxWeight[j - 1] != -1)
+					if (MaxWeight[j - 1] + Current->Son[Pos]->Weight > MaxWeight[i])
+						MaxWeight[i] = MaxWeight[j - 1] + Current->Son[Pos]->Weight;
+			Current = Current->Son[Pos];
+		}
+		else return;
+	}
+}
+
+void Insert(char *Word, WEIGHT_TYPE Weight, Trie Root)
+{
+	int i, n = 0;
+	Trie Current = Root;
+	POSITION Pos;
+	
+	n = strlen(Word);
+	for (i = n - 1; i > -1; i--){
+		Pos = Word[i] - 'a';
+		if (!Current->Son[Pos])
+			Current->Son[Pos] = BuildTrie();
+		Current = Current->Son[Pos];
+	}
+	Current->End = TRUE;
+	Current->Weight = Weight;
+}
+
+Trie BuildTrie(void)
 {
 	int i;
-	HashTable H;
 
-	H = (HashTable)malloc(sizeof(struct Cell));
-	H->TableSize = BucketSize;
-	H->Buckets = (ElementType *)malloc(BucketSize * sizeof(ElementType));
-	for (i = 0; i < BucketSize; i++)
-		H->Buckets[i] = (ElementType)malloc(sizeof(struct Word));
-	for (i = 0; i < BucketSize; i++)
-		H->Buckets[i]->Next = NULL;
-	return H;
-}
-
-Position Hash(char Key[])
-{
-	int n;
-	Position Pos;
-
-	n = strlen(Key);
-	if (n == 1)
-		Pos = tolower(Key[0] - 'a');
-	else
-		Pos = tolower(Key[0] - 'a') * 26 + tolower(Key[1] - 'a');
-	return Pos;
-}
-
-ElementType Find(char Key[], HashTable H)
-{
-	Position Pos = Hash(Key);
-	ElementType Current;
-
-	Current = H->Buckets[Pos]->Next;
-	while (Current && strcmp(Key, Current->Name))
-		Current = Current->Next;
-	return Current;
-}
-
-void Insert(ElementType Key, HashTable H)
-{
-	ElementType Element;
-	Position Pos = Hash(Key->Name);
-
-	Element = (ElementType)malloc(sizeof(struct Word));
-	strcpy(Element->Name, Key->Name);
-	Element->Weight = Key->Weight;
-	Element->Next = H->Buckets[Pos]->Next;
-	H->Buckets[Pos]->Next = Element;
-}
-
-void Free(HashTable H)
-{
-	ElementType Current;
-	int i;
-
-	for (i = 0; i < BucketSize; i++)
-		while (H->Buckets[i]->Next){
-			Current = H->Buckets[i]->Next;
-			if (!Current->Next){
-				free(Current);
-				H->Buckets[i]->Next = NULL;
-			}
-			else{
-				while (Current->Next->Next)Current = Current->Next;
-				free(Current->Next);
-				Current->Next = NULL;
-			}
-		}
+	Buff.Hahaha[Buff.Size].End = FALSE;
+	for (i = 0; i < 26; i++)
+		Buff.Hahaha[Buff.Size].Son[i] = NULL;
+	return &Buff.Hahaha[Buff.Size++];
 }
