@@ -142,10 +142,6 @@ inline bool operator<(const fract &lhs, const fract &rhs)
 		if (lhs.num * rhs.den < rhs.num * lhs.den)
 			return true;
 		else return false;
-	else if (lhs.num > 0 && rhs.num < 0)
-		return false;
-	else if (lhs.num < 0 && rhs.num > 0)
-		return true;
 	else if (lhs.num < rhs.num)
 		return true;
 	else return false;
