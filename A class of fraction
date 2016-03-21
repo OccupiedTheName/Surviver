@@ -383,12 +383,14 @@ inline fract& fract::operator-=(const int &i)
 inline fract& fract::operator++()
 {
 	num += den;
+	reduct();
 	return *this;
 }
 
 inline fract& fract::operator--()
 {
 	num -= den;
+	reduct();
 	return *this;
 }
 
@@ -399,29 +401,33 @@ inline fract fract::operator-()
 //
 void fract::reduct()
 {
-	if (den < 0){
-		num = -num;
-		den = -den;
-	}
-	if (abs(num) > den){
-		for (int n = den; n > 0; n--)
-			if (!(num % n) && !(den % n)){
-				num /= n;
-				den /= n;
-				break;
-			}
-	}
-	else if (abs(num) < den){
-		for (int n = abs(num); n > 0; n--)
-			if (!(num % n) && !(den % n)){
-				num /= n;
-				den /= n;
-				break;
-			}
-	}
+	if (num == 0)
+		den = 1;
 	else{
-		num /= num;
-		den /= den;
+		if (den < 0){
+			num = -num;
+			den = -den;
+		}
+		if (abs(num) > den){
+			for (int n = den; n > 0; n--)
+				if (!(num % n) && !(den % n)){
+					num /= n;
+					den /= n;
+					break;
+				}
+		}
+		else if (abs(num) < den){
+			for (int n = abs(num); n > 0; n--)
+				if (!(num % n) && !(den % n)){
+					num /= n;
+					den /= n;
+					break;
+				}
+		}
+		else{
+			num /= num;
+			den /= den;
+		}
 	}
 }
 
