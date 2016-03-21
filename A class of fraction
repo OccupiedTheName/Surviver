@@ -1,0 +1,437 @@
+/*
+*   The data type 'double' is not the most accurate. It will loss some
+* data when it does multiplication or division or other operations.
+* But the fraction will not loss data unless the number is out of range.
+* So when you use it, take care that not let the fraction be out of
+* range. Though in most situation, the fraction will not be out of
+* range, many prime numbers multiply will make the number out of range.
+* So when you make too many numbers multiply together, using data type
+* 'double' will be safe.
+*
+*   In future I will add the transition between 'double' and 'fraction',
+* and write a header files about matrix. Using fracton, the determinant's
+* culculation will be more accurate.
+*
+*
+* Writen by a student, who is a newbie in Northeastern University in Shenyang Province.
+*/
+#ifndef FRACT
+#define FRACT
+#include <iostream>
+
+class fract{//fraction
+	friend fract abs(const fract&);
+	friend std::istream& operator>>(std::istream&, fract&);
+	friend std::ostream& operator<<(std::ostream&, const fract&);
+	//
+	friend bool operator<(const fract&, const fract&);
+	friend bool operator<=(const fract&, const fract&);
+	friend bool operator>(const fract&, const fract&);
+	friend bool operator>=(const fract&, const fract&);
+	friend bool operator==(const fract&, const fract&);
+	//
+	friend bool operator<(const int&, const fract&);
+	friend bool operator<=(const int&, const fract&);
+	friend bool operator>(const int&, const fract&);
+	friend bool operator>=(const int&, const fract&);
+	friend bool operator==(const int&, const fract&);
+	//
+	friend bool operator<(const fract&, const int&);
+	friend bool operator<=(const fract&, const int&);
+	friend bool operator>(const fract&, const int&);
+	friend bool operator>=(const fract&, const int&);
+	friend bool operator==(const fract&, const int&);
+public:
+	fract() :num(0), den(1){}
+	fract(const int &i) :num(i), den(1){}
+	fract(const int &i, const int &j) :num(i), den(j){ reduct(); }
+public:
+	fract& operator+=(const fract&);
+	fract& operator-=(const fract&);
+	fract& operator*=(const fract&);
+	fract& operator/=(const fract&);
+	fract& operator%=(const fract&);
+	//
+	fract& operator+=(const int&);
+	fract& operator-=(const int&);
+	fract& operator*=(const int&);
+	fract& operator/=(const int&);
+	fract& operator%=(const int&);
+	//
+	fract& operator++();
+	fract& operator--();
+	fract operator-();
+public:
+	double ltr();//return the literal of the fraction
+private:
+	int num;//numerator
+	int den;//denominator
+
+	void reduct();//reduction of the fraction
+};
+
+fract abs(const fract&);
+std::ostream& operator<<(std::ostream&, const fract&);
+std::istream& operator>>(std::istream&, fract&);
+//
+bool operator<(const fract&, const fract&);
+bool operator<=(const fract&, const fract&);
+bool operator>(const fract&, const fract&);
+bool operator>=(const fract&, const fract&);
+bool operator==(const fract&, const fract&);
+//
+bool operator<(const int&, const fract&);
+bool operator<=(const int&, const fract&);
+bool operator>(const int&, const fract&);
+bool operator>=(const int&, const fract&);
+bool operator==(const int&, const fract&);
+//
+bool operator<(const fract&, const int&);
+bool operator<=(const fract&, const int&);
+bool operator>(const fract&, const int&);
+bool operator>=(const fract&, const int&);
+bool operator==(const fract&, const int&);
+//
+fract operator+(const fract&, const fract&);
+fract operator-(const fract&, const fract&);
+fract operator/(const fract&, const fract&);
+fract operator%(const fract&, const fract&);
+fract operator*(const fract&, const fract&);
+//
+fract operator+(const int&, const fract&);
+fract operator-(const int&, const fract&);
+fract operator/(const int&, const fract&);
+fract operator%(const int&, const fract&);
+fract operator*(const int&, const fract&);
+//
+fract operator+(const fract&, const int&);
+fract operator-(const fract&, const int&);
+fract operator/(const fract&, const int&);
+fract operator%(const fract&, const int&);
+fract operator*(const fract&, const int&);
+//
+inline fract abs(const fract &i)
+{ 
+	return fract(abs(i.num), i.den);
+}
+
+inline std::ostream& operator<<(std::ostream &out, const fract &rhs)
+{
+	out << rhs.num << "/" << rhs.den;
+	return out;
+}
+
+inline std::istream& operator>>(std::istream &in, fract &rhs)
+{
+	in >> rhs.num;
+	if (!in)
+		return in;
+	in >> rhs.den;
+	if (!in){
+		in.clear();
+		char c;
+		in >> c >> rhs.den;
+	}
+	rhs.reduct();
+	return in;
+}
+//
+inline bool operator<(const fract &lhs, const fract &rhs)
+{
+	if (lhs.num * rhs.num > 0)
+		if (lhs.num * rhs.den < rhs.num * lhs.den)
+			return true;
+		else return false;
+	else if (lhs.num > 0 && rhs.num < 0)
+		return false;
+	else if (lhs.num < 0 && rhs.num > 0)
+		return true;
+	else if (lhs.num < rhs.num)
+		return true;
+	else return false;
+}
+
+inline bool operator<=(const fract &lhs, const fract &rhs)
+{
+	return (lhs == rhs || lhs < rhs);
+}
+
+inline bool operator>(const fract &lhs, const fract &rhs)
+{
+	return !(lhs <= rhs);
+}
+
+inline bool operator>=(const fract &lhs, const fract &rhs)
+{
+	return !(lhs < rhs);
+}
+
+inline bool operator==(const fract &lhs, const fract &rhs)
+{
+	return (lhs.num == rhs.num && lhs.den == rhs.den) ? true : false;
+}
+//
+inline bool operator<(const int &lhs, const fract &rhs)
+{
+	return fract(lhs) < rhs;
+}
+
+inline bool operator<=(const int &lhs, const fract &rhs)
+{
+	return fract(lhs) <= rhs;
+}
+
+inline bool operator>(const int &lhs, const fract &rhs)
+{
+	return fract(lhs) > rhs;
+}
+
+inline bool operator>=(const int &lhs, const fract &rhs)
+{
+	return fract(lhs) >= rhs;
+}
+
+inline bool operator==(const int &lhs, const fract &rhs)
+{
+	return fract(lhs) == rhs;
+}
+//
+inline bool operator<(const fract &lhs, const int &rhs)
+{
+	return lhs < fract(rhs);
+}
+
+inline bool operator<=(const fract &lhs, const int &rhs)
+{
+	return lhs <= fract(rhs);
+}
+
+inline bool operator>(const fract &lhs, const int &rhs)
+{
+	return lhs > fract(rhs);
+}
+
+inline bool operator>=(const fract &lhs, const int &rhs)
+{
+	return lhs >= fract(rhs);
+}
+
+inline bool operator==(const fract &lhs, const int &rhs)
+{
+	return lhs == fract(rhs);
+}
+//
+inline fract operator%(const fract &lhs, const fract &rhs)
+{
+	fract i(lhs);
+	i %= rhs;
+	return i;
+}
+
+inline fract operator*(const fract &lhs, const fract &rhs)
+{
+	fract i(lhs);
+	i *= rhs;
+	return i;
+}
+
+inline fract operator/(const fract &lhs, const fract &rhs)
+{
+	fract i(lhs);
+	i /= rhs;
+	return i;
+}
+
+inline fract operator+(const fract &lhs, const fract &rhs)
+{
+	fract i(lhs);
+	i += rhs;
+	return i;
+}
+
+inline fract operator-(const fract &lhs, const fract &rhs)
+{
+	fract i(lhs);
+	i -= rhs;
+	return i;
+}
+//
+inline fract operator%(const int &lhs, const fract &rhs)
+{
+	return fract(lhs) % rhs;
+}
+
+inline fract operator*(const int &lhs, const fract &rhs)
+{
+	return fract(lhs) * rhs;
+}
+
+inline fract operator/(const int &lhs, const fract &rhs)
+{
+	return fract(lhs) / rhs;
+}
+
+inline fract operator+(const int &lhs, const fract &rhs)
+{
+	return fract(lhs) + rhs;
+}
+
+inline fract operator-(const int &lhs, const fract &rhs)
+{
+	return fract(lhs) - rhs;
+}
+//
+inline fract operator%(const fract &lhs, const int &rhs)
+{
+	return lhs % fract(rhs);
+}
+
+inline fract operator*(const fract &lhs, const int &rhs)
+{
+	return lhs * fract(rhs);
+}
+
+inline fract operator/(const fract &lhs, const int &rhs)
+{
+	return lhs / fract(rhs);
+}
+
+inline fract operator+(const fract &lhs, const int &rhs)
+{
+	return lhs + fract(rhs);
+}
+
+inline fract operator-(const fract &lhs, const int &rhs)
+{
+	return lhs - fract(rhs);
+}
+//
+fract& fract::operator%=(const fract &rhs)
+{
+	fract l(abs(*this)), r(abs(rhs));
+	l.num *= r.den;
+	l.den *= r.den;
+	r.num *= l.den;
+	r.den *= l.den;
+	while (l.num){
+		l.num -= r.num;
+		if (l.num - r.num < 0)break;
+	}
+	if (num * rhs.num < 0)
+		*this = -l;
+	else *this = l;
+	reduct();
+	return *this;
+}
+
+fract& fract::operator/=(const fract &rhs)
+{
+	num *= rhs.den;
+	den *= rhs.num;
+	reduct();
+	return *this;
+}
+
+fract& fract::operator*=(const fract &rhs)
+{
+	num *= rhs.num;
+	den *= rhs.den;
+	reduct();
+	return *this;
+}
+
+fract& fract::operator+=(const fract &rhs)
+{
+	num = num * rhs.den + den * rhs.num;
+	den *= rhs.den;
+	reduct();
+	return *this;
+}
+
+inline fract& fract::operator-=(const fract &rhs)
+{
+	*this += -fract(rhs);
+	return *this;
+}
+//
+inline fract& fract::operator%=(const int &i)
+{
+	*this %= fract(i);
+	return *this;
+}
+
+inline fract& fract::operator/=(const int &i)
+{
+	*this /= fract(i);
+	return *this;
+}
+
+inline fract& fract::operator*=(const int &i)
+{
+	*this *= fract(i);
+	return *this;
+}
+
+inline fract& fract::operator+=(const int &i)
+{
+	*this += fract(i);
+	return *this;
+}
+
+inline fract& fract::operator-=(const int &i)
+{
+	*this -= fract(i);
+	return *this;
+}
+//
+inline fract& fract::operator++()
+{
+	num += den;
+	return *this;
+}
+
+inline fract& fract::operator--()
+{
+	num -= den;
+	return *this;
+}
+
+inline fract fract::operator-()
+{
+	return fract(-num, den);
+}
+//
+void fract::reduct()
+{
+	if (den < 0){
+		num = -num;
+		den = -den;
+	}
+	if (abs(num) > den){
+		for (int n = den; n > 0; n--)
+			if (!(num % n) && !(den % n)){
+				num /= n;
+				den /= n;
+				break;
+			}
+	}
+	else if (abs(num) < den){
+		for (int n = abs(num); n > 0; n--)
+			if (!(num % n) && !(den % n)){
+				num /= n;
+				den /= n;
+				break;
+			}
+	}
+	else{
+		num /= num;
+		den /= den;
+	}
+}
+
+inline double fract::ltr()
+{
+	return double(num) / double(den);
+}
+
+#endif
